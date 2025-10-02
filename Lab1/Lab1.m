@@ -1,7 +1,6 @@
 
-% 4.2: setup q matrix 
+% 4.2: setup q matrix and plot sample joint space trajectory
 q = zeros(6,200);
-
 q(1,:) = linspace(0,pi,200);
 q(2,:) = linspace(0,pi/2,200);
 q(3,:) = linspace(0,pi,200);
@@ -12,15 +11,12 @@ q = transpose(q); % want 200x6
 
 % DH = [theta_i, d_i, a_i, alpha_i]
 DH = [0         76          0       pi/2;
-      0     -23.65      43.18          0;
+      0     -23.65      43.23          0;
       0          0          0       pi/2;
       0      43.18          0      -pi/2;
       0          0          0       pi/2;
       0         20          0          0];
-
 myrobot = mypuma560(DH);
-
-% 4.2: plot sample joint space trajectory
 % see lab1-4.2.fig
 % plot(myrobot,q);
 
@@ -38,6 +34,35 @@ end
 % hold on;
 % plot(myrobot,q);
 
+% 4.4: inverse kinematics
+% test inverse function is correct
+H_test = [cos(pi/4) -sin(pi/4) 0 20; sin(pi/4) cos(pi/4) 0 23; 0 0 1 15; 0 0 0 1];
+q_expected = [-0.0331 -1.0667 1.0283 3.1416 3.1032 0.8185];
+q_test = inverse(H_test,myrobot);
+% test picking up an object
+% 1) d: sequence of steps of x,y,z from (10,23,15) to (30,30,100)
+d = zeros(3,100);
+d(1,:) = linspace(10,30,100);
+d(2,:) = linspace(23,30,100);
+d(3,:) = linspace(15,100,100);
+d = transpose(d);
+% 2) R_z_pi/4
+R_z = [ cos(pi/4)    -sin(pi/4)  0;
+        sin(pi/4)     cos(pi/4)  0;
+                0             0  1];
+% 3) solve inverse
+for i=1:100
+    H_i = [  R_z    transpose(d(i,:));
+            0 0 0                   1];
+    q(i,:) = inverse(H_i,myrobot);
+end
+% plot trajectory
+plot3(d(:,1),d(:,2),d(:,3), 'r');
+xlim([-100,100])
+ylim([-100,100])
+zlim([-50,300])
+hold on;
+plot(myrobot,q);
 
 
 

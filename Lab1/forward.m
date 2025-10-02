@@ -3,10 +3,13 @@ function [H] = forward(joint,myrobot)
     d = myrobot.d;
     alpha = myrobot.alpha;
     a = myrobot.a;
+    
+    s = size(joint);
+    num_joints = s(1);
 
     % compute H_i-1_i using DH parameters
-    A = zeros(6,4,4);
-    for i=1:6
+    A = zeros(num_joints,4,4);
+    for i=1:num_joints
         theta_i = joint(i);
         alpha_i = alpha(i);
         a_i = a(i);
@@ -22,5 +25,8 @@ function [H] = forward(joint,myrobot)
     end
     
     % get H_0_6
-    H = squeeze(A(1,:,:))*squeeze(A(2,:,:))*squeeze(A(3,:,:))*squeeze(A(4,:,:))*squeeze(A(5,:,:))*squeeze(A(6,:,:));
+    H = eye(4);
+    for i=1:num_joints
+        H = H*squeeze(A(i,:,:));
+    end
 end
