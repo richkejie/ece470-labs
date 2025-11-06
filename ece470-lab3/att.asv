@@ -1,0 +1,31 @@
+function tau = att(q,q2,myrobot)
+    tau = zeros(6,1);
+    F_atts = zeros(3,6);
+
+    % loop through links
+    % all joints are revolute (R)
+    for i =1:6
+        % find Jacobian
+        J_v_i = zeros(3,6);
+
+        % extract transformation
+        H_i = myrobot.A(1:i, q);
+        o_i = H_i.t; % origin of Fi wrt F0
+
+        % fill columns of J until column i
+        for j = 1:i
+            H_j_1 = myrobot.A(1:j-1,q);
+            R_j_1 = H_j_1.R;
+            z_j_1 = R_j_1(:,3); % z_{j-1} wrt F0
+            o_j_1 = H_j_1.t; % origin of F{j-1} wrt F0
+            J_v_i(:,j) = cross(z_j_1, (o_i-o_j_1)); % column
+        end
+
+        o_i_f = myrobot.A(1:i, q2).t; % final joint angle
+
+        F_
+
+
+    end
+
+end

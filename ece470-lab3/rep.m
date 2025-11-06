@@ -1,0 +1,65 @@
+function tau = rep(q, myrobot, obs)
+    tau = zeros(6,1);
+    F_rep = zeros(3,6);
+
+    % loop through links
+    % all joints are revolute (R)
+    for i =1:6
+        % find Jacobian (same as att.m)
+        J_v_i = zeros(3,6);
+
+        % extract transformation
+        H_i = myrobot.A(1:i, q);
+        o_i = H_i(1:3,4); % origin of Fi wrt F0
+
+        o_i; % display o_i
+
+        % fill columns of J until column i
+        for j = 1:i
+            H_j_1 = myrobot.A(1:j-1,q);
+            R_j_1 = H_j_1(1:3,1:3);
+            z_j_1 = R_j_1(:,3); % z_{j-1} wrt F0
+            o_j_1 = H_j_1(1:3,4); % origin of F{j-1} wrt F0
+            J_v_i(:,j) = cross(z_j_1, (o_i-o_j_1)); % column
+        end
+
+        % find F_i_rep
+        F_i_rep = zeros(3,1);
+        switch obs.type
+            case 'cyl'
+                o_i_xy = o_i(1:2);
+                r = o_i_xy - obs.c;
+                distance = norm(r) - obs.R;
+                if distance > obs.rho0 % outside radius of influence
+                    F_i_rep = zeros(3,1);
+                else % inside radius of influence
+                    eta_i = 1;
+                    r_3 = [r(1); r(2); 0];
+                    grad_distance = r_3 / norm(r_3);
+                    F_i_rep = eta_i * (1/distance - 1/obs.rho0) * distance^(-2) * grad_distance;
+                end
+            case 'sph'
+                r = o_i - obs.c;
+                distance = norm(r) - obs.R;
+                if distance > obs.rho0 % outside radius of influence
+                    F_i_rep = zeros(3,1);
+                else % inside radius of influence
+                    eta_i = 1;
+                    grad_distance = r / norm(r);
+                    F_i_rep = eta_i * (1/distance - 1/obs.rho0) * distance^(-2) * grad_distance;
+                end
+        end
+        F_i_rep_display = F_i_rep*10^6; % display rep force
+        tau = tau + transpose(J_v_i) * F_i_rep;
+        F_rep(:,i) = F_i_rep;
+
+    end
+
+    % normalize tau
+    if norm(tau) ~= 0
+        tau = tau/norm(tau);
+    end
+
+    tau = transpose(tau);
+
+end
