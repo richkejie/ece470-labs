@@ -140,9 +140,10 @@ for i = 1:size(q_0_path,1)
     setAngles(q_0_path(i,:),0.04)
 end
 
-for i = 1:size(q_1_path,1)
-    setAngles(q_1_path(i,:),0.04)
-end
+% for i = 1:size(q_1_path,1)
+%     setAngles(q_1_path(i,:),0.04)
+% end
+setAngles(q1,0.04) % send robot straight to p1 w/out obstacle avoidance
 
 setGripper(0) % close
 
