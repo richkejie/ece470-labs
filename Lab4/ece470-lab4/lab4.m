@@ -95,8 +95,8 @@ q3 = inverse_kuka(H3, kuka);
 
 t = linspace(0,10,300);
 setupobstacle; % see setupobstacle.m for obstacles
-% uncomment the part you want to see
 
+% uncomment the part you want to see
 fprintf("HOME to q0: \n")
 qref_0 = motionplan(q_HOME, q0, 0, 10, kuka_forces, obs, 0.01, eta, alpha_att, alpha_rep);
 q_0_path = ppval(qref_0,t)';
@@ -163,13 +163,12 @@ setGripper(0) % open
 %% 4.3 Creative Motion Planning
 %% simulation and calculation
 
-% probably something like this:
-% place multiple objects in a line
-
-% same obstacles
-% move EE over, then down to first object
-% move EE up then over to dest and down to place
-% repeat for 2 more objects
+% summary of what our trajectory does:
+% there are two blocks stacked on top of each located at p`
+% The KUKA picks up a block and places it between the two cylinder
+% obstacles
+% then the KUKA picks up the other block and places it on top of the first
+% block
 
 fprintf("Testing creative motion planning of kuka in simulation: \n")
 z_grid = 45;
@@ -180,7 +179,13 @@ p1b = [370 -440 z_grid]; % location of lower cube
 p_intermediate = [600 -200 120];
 p2 = [600 -200 z_grid]; % destination to drop
 p2b = [600 -200 z_grid+cube_height];
-% p3 = [620 350 225];
+
+% p0 is a point above the starting block stack
+% p1 is the position of the upper block to pick up
+% p1b is the position of the lower block to pick up
+% p_intermediate is a position above the destination to place
+% p2 is the position to place the first block
+% p2b is the position to place the second block (on top of the first block)
 
 eta = 1;
 alpha_att = 0.01;
@@ -204,47 +209,26 @@ q_intermediate = inverse_kuka(H_intermediate, kuka);
 q2 = inverse_kuka(H2, kuka);
 q2b = inverse_kuka(H2b, kuka);
 
-%%
 t = linspace(0,10,300);
-setupobstacle; % see setupobstacle.m for obstacles
-% uncomment the part you want to see
+setupobstacle; % see setupobstacle.m for obstacles (same as before)
 
+% run motion planning for various paths (not all paths computed, see next
+% section)
 fprintf("HOME to q0: \n")
 qref_0 = motionplan(q_HOME, q0, 0, 10, kuka_forces, obs, 0.01, eta, alpha_att, alpha_rep);
 q_0_path = ppval(qref_0,t)';
-% hold on
-% axis([-700 700 -700 700])
-% plotobstacle(obs);
-% plot(kuka,q_0_path);
-% hold off
 
 fprintf("q0 to q1: \n")
 qref_1 = motionplan(q0, q1, 0, 10, kuka_forces, obs, 0.01, eta, alpha_att, alpha_rep);
 q_1_path = ppval(qref_1,t)';
-% hold on
-% axis([-700 700 -700 700])
-% plotobstacle(obs);
-% plot(kuka,q_1_path);
-% hold off
 
 fprintf("q1 to q_intermediate: \n")
 qref_2 = motionplan(q1, q_intermediate, 0, 10, kuka_forces, obs, 0.01, eta, alpha_att, alpha_rep);
 q_2_path = ppval(qref_2,t)';
 
-% will go back up from q1 to q0
-
 fprintf("q_intermediate to q2: \n")
 qref_3 = motionplan(q_intermediate, q2, 0, 10, kuka_forces, obs, 0.01, eta, alpha_att, alpha_rep);
 q_3_path = ppval(qref_3,t)';
-% hold on
-% axis([-700 1000 -700 700])
-% plotobstacle(obs);
-% plot(kuka,q_2_path);
-% hold off
-
-% fprintf("q2 to q_intermediate: \n")
-% qref_4 = motionplan(q2, q_intermediate, 0, 10, kuka_forces, obs, 0.01, eta, 0.005, 1);
-% q_4_path = ppval(qref_4,t)';
 
 fprintf("q_intermediate to q0: \n")
 qref_5 = motionplan(q_intermediate, q0, 0, 10, kuka_forces, obs, 0.01, eta, 0.005, 1);
@@ -265,38 +249,47 @@ q_7_path = ppval(qref_7,t)';
 setHome(0.04)
 setGripper(0) % open gripper
 
+% move from HOME to p0
 for i = 1:size(q_0_path,1)
     setAngles(q_0_path(i,:),0.04)
 end
 
+% move from p0 to p1
 setAngles(q1,0.04) % send robot straight to p1 w/out obstacle avoidance
 
-setGripper(1) % close
+setGripper(1) % close -- pick up upper block
 
+% move from p1 to p_intermediate
 for i = 1:size(q_2_path,1)
     setAngles(q_2_path(i,:),0.04)
 end
 
-setAngles(q2,0.04)
+% move from p_intermediate to p2
+setAngles(q2,0.04) % send robot straight to p2 w/out obstacle avoidance
 
-setGripper(0) % open
+setGripper(0) % open -- place first block
 
-setAngles(q_intermediate,0.04)
+% move from p2 to p_intermediate
+setAngles(q_intermediate,0.04) % send robot straight up to p_intermediate
 
+% move from p_intermediate to p0
 for i = 1:size(q_5_path,1)
     setAngles(q_5_path(i,:),0.04)
 end
 
-setAngles(q1b,0.05)
+% move from p0 to p1b
+setAngles(q1b,0.05) % send robot straight to p1b w/out obstacle avoidance
 
-setGripper(1) % close
+setGripper(1) % close -- pick up lower block
 
+% move from p1b to p_intermediate
 for i = 1:size(q_7_path,1)
     setAngles(q_7_path(i,:),0.04)
 end
 
-setAngles(q2b,0.04)
+% move from p_intermediate to p2
+setAngles(q2b,0.04) % send robot straight to p2 w/out obstacle avoidance
 
-setGripper(0) % open
+setGripper(0) % open -- place second block
 
 setHome(0.04)
