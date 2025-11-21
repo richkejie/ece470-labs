@@ -170,6 +170,8 @@ setGripper(0) % open
 % then the KUKA picks up the other block and places it on top of the first
 % block
 
+% see attached movie: creative-motion-planning-movie.mp4
+
 fprintf("Testing creative motion planning of kuka in simulation: \n")
 z_grid = 45;
 cube_height = 36;
